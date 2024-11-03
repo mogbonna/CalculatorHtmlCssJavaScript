@@ -1,4 +1,4 @@
-# Calculator Web App README
+# Calculator Web App
 
 ## Overview
 
