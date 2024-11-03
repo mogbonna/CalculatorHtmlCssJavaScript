@@ -3,31 +3,20 @@ const inputBox = document.getElementById("input");
 const expressionDiv = document.getElementById("expression");
 const resultDiv = document.getElementById("result");
 
-// Define expression and result variable
 let expression = "";
 let result = "";
 
 function addValue(value) {
   if (value === ".") {
-    // Find the index of the last operator in the expression
-    const lastOperatorIndex = expression.search(/[+\-*/]/);
-    // Find the index of the last decimal in the expression
-    const lastDecimalIndex = expression.lastIndexOf(".");
-    // Find the index of the last number in the expression
     const lastNumberIndex = Math.max(
       expression.lastIndexOf("+"),
       expression.lastIndexOf("-"),
       expression.lastIndexOf("*"),
       expression.lastIndexOf("/")
     );
-    // Check if this is the first decimal in the current number or if the expression is empty
-    if (
-      (lastDecimalIndex < lastOperatorIndex ||
-        lastDecimalIndex < lastNumberIndex ||
-        lastDecimalIndex === -1) &&
-      (expression === "" ||
-        expression.slice(lastNumberIndex + 1).indexOf("-") === -1)
-    ) {
+    const lastDecimalIndex = expression.lastIndexOf(".");
+
+    if (lastDecimalIndex < lastNumberIndex || lastDecimalIndex === -1) {
       expression += value;
     }
   } else {
@@ -35,7 +24,7 @@ function addValue(value) {
   }
 }
 
-function updateDisplay(expression, result) {
+function updateDisplay() {
   expressionDiv.textContent = expression;
   resultDiv.textContent = result;
 }
@@ -64,16 +53,12 @@ function submit() {
 
 function evaluateExpression() {
   try {
-    // Check for division by zero
-    if (/\/0\b/.test(expression)) {
-      throw new Error("Cannot divide by zero");
-    }
+    if (/\/0\b/.test(expression)) throw new Error("Cannot divide by zero");
 
-    const evalResult = eval(expression);
+    const evalResult = Function('"use strict";return (' + expression + ")")(); // Safer alternative to eval
 
-    if (isNaN(evalResult) || !isFinite(evalResult)) {
+    if (isNaN(evalResult) || !isFinite(evalResult))
       throw new Error("Invalid operation");
-    }
 
     return evalResult < 1
       ? parseFloat(evalResult.toFixed(10))
@@ -84,31 +69,22 @@ function evaluateExpression() {
 }
 
 function negate() {
-  // Negate the result if expression is empty and result is present
   if (expression === "" && result !== "") {
     result = -result;
-    // Toggle the sign of the expression if its not already negatvie and its not empty
-  } else if (!expression.startsWith("-") && expression !== "") {
-    expression = "-" + expression;
-    // Remove the negatvie sign from the expression if its already negative.
   } else if (expression.startsWith("-")) {
     expression = expression.slice(1);
+  } else {
+    expression = "-" + expression;
   }
 }
 
 function percentage() {
-  // Evaluate the expression, else it will take the percentage of only the first number
   if (expression !== "") {
     result = evaluateExpression();
     expression = "";
-    if (!isNaN(result) && isFinite(result)) {
-      result /= 100;
-    } else {
-      result = "";
-    }
+    result /= 100;
   } else if (result !== "") {
-    // If expression is empty but the result exisits, divide by 100
-    result = parseFloat(result) / 100;
+    result /= 100;
   }
 }
 
@@ -118,18 +94,39 @@ function decimal(value) {
   }
 }
 
+function square() {
+  if (expression) {
+    const number = parseFloat(expression);
+
+    if (!isNaN(number)) {
+      result = number ** 2;
+      expression = "";
+    }
+  }
+}
+
+function sqrt() {
+  if (expression) {
+    const number = parseFloat(expression);
+
+    if (!isNaN(number)) {
+      result = Math.sqrt(number);
+      expression = ""; // Clear the input after calculation
+    }
+  }
+}
+
 // Define event handler for button clicks
 function buttonClick(event) {
-  // Get values from clicked button
   const target = event.target;
-  const action = target.dataset.action;
-  const value = target.dataset.value;
-  //   console.log(target, action, value);
 
-  // Switch case to control the calculator
+  if (!target.dataset.action) return; // Ensure action exists
+
+  const action = target.dataset.action;
+
   switch (action) {
     case "number":
-      addValue(value);
+      addValue(target.dataset.value);
       break;
     case "clear":
       clear();
@@ -137,16 +134,13 @@ function buttonClick(event) {
     case "backspace":
       backspace();
       break;
-    // Add the result to expression as a starting point if expression is empty
     case "addition":
     case "subtraction":
     case "multiplication":
     case "division":
-      if (expression === "" && result !== "") {
-        startFromResult(value);
-      } else if (expression !== "" && !isLastCharOperator()) {
-        addValue(value);
-      }
+      if (expression === "" && result !== "")
+        startFromResult(target.dataset.value);
+      else if (!isLastCharOperator()) addValue(target.dataset.value);
       break;
     case "submit":
       submit();
@@ -158,12 +152,20 @@ function buttonClick(event) {
       percentage();
       break;
     case "decimal":
-      decimal(value);
+      decimal(target.dataset.value);
+      break;
+    case "square":
+      square();
+      break;
+    case "sqrt":
+      sqrt();
+      break;
+    case "parenthesis":
+      addValue(target.dataset.value);
       break;
   }
 
-  // Update display
-  updateDisplay(expression, result);
+  updateDisplay();
 }
 
 inputBox.addEventListener("click", buttonClick);
