@@ -63,13 +63,24 @@ function submit() {
 }
 
 function evaluateExpression() {
-  const evalResult = eval(expression);
-  // checks if evalResult isNaN or infinite. It if is, return a space character ' '
-  return isNaN(evalResult) || !isFinite(evalResult)
-    ? " "
-    : evalResult < 1
-    ? parseFloat(evalResult.toFixed(10))
-    : parseFloat(evalResult.toFixed(2));
+  try {
+    // Check for division by zero
+    if (/\/0\b/.test(expression)) {
+      throw new Error("Cannot divide by zero");
+    }
+
+    const evalResult = eval(expression);
+
+    if (isNaN(evalResult) || !isFinite(evalResult)) {
+      throw new Error("Invalid operation");
+    }
+
+    return evalResult < 1
+      ? parseFloat(evalResult.toFixed(10))
+      : parseFloat(evalResult.toFixed(2));
+  } catch (error) {
+    return error.message; // Displays error message in the result
+  }
 }
 
 function negate() {
