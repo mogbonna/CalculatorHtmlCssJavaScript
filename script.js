@@ -1,5 +1,5 @@
 // Constants
-const MAX_INPUT_LENGTH = 15;
+const MAX_INPUT_LENGTH = 20;
 const VALID_OPERATORS = ["+", "-", "*", "/"];
 const VALID_SPECIAL_CHARS = ["(", ")", "."];
 
